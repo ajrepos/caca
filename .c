@@ -543,3 +543,240 @@ show ip interface brief
 show running-config | section interface
 # 3. Verificar que switch tiene puerto trunk al router
 show interfaces trunk
+
+# ============================================
+# CHULETA ENRUTAMIENTO ESTÁTICO - Cisco
+# ============================================
+
+# -------------------- COMANDOS BÁSICOS --------------------
+enable                          # Modo privilegiado
+configure terminal              # Modo configuración
+hostname R1                     # Cambiar nombre del router
+interface fastEthernet 0/0     # Configurar interfaz
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+exit
+
+# -------------------- CONFIGURACIÓN DE ENLACES SERIALES --------------------
+interface serial 0/0/0
+ip address 192.168.5.1 255.255.255.252
+clock rate 64000               # Solo en DCE (el extremo con reloj)
+no shutdown
+exit
+
+# -------------------- RUTAS ESTÁTICAS --------------------
+# Ruta estática estándar
+ip route [red_destino] [máscara] [siguiente_salto]
+
+# Ejemplos:
+ip route 192.168.3.0 255.255.255.0 192.168.5.2
+ip route 192.168.4.0 255.255.255.0 192.168.5.2
+
+# Ruta por defecto (gateway de último recurso)
+ip route 0.0.0.0 0.0.0.0 192.168.5.6
+
+# Ruta estática con interfaz de salida
+ip route 192.168.3.0 255.255.255.0 serial 0/0/0
+
+# -------------------- VERIFICACIÓN --------------------
+show ip route                  # Ver tabla de enrutamiento
+show ip interface brief        # Ver estado de interfaces
+show running-config            # Ver configuración actual
+show interfaces serial 0/0/0   # Ver detalles interfaz serial
+ping [dirección]               # Probar conectividad
+
+# -------------------- EJEMPLOS PRÁCTICOS --------------------
+
+# EJERCICIO 1 - Tablas de enrutamiento
+
+# R1
+ip route 192.168.3.0 255.255.255.0 192.168.5.2
+ip route 192.168.4.0 255.255.255.0 192.168.5.2
+ip route 0.0.0.0 0.0.0.0 192.168.5.6
+
+# R2
+ip route 192.168.1.0 255.255.255.0 192.168.5.1
+ip route 192.168.2.0 255.255.255.0 192.168.5.1
+ip route 0.0.0.0 0.0.0.0 192.168.5.10
+
+# R3
+ip route 192.168.1.0 255.255.255.0 192.168.5.5
+ip route 192.168.2.0 255.255.255.0 192.168.5.5
+ip route 192.168.3.0 255.255.255.0 192.168.5.9
+ip route 192.168.4.0 255.255.255.0 192.168.5.9
+ip route 0.0.0.0 0.0.0.0 80.0.0.2
+
+# -------------------- EJERCICIO 2 - VLSM con routers 2811 --------------------
+
+# R1 (Estudiantes)
+interface fastEthernet 0/0
+ip address 192.168.0.1 255.255.255.128
+no shutdown
+exit
+interface serial 0/3/0
+ip address 192.168.0.193 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/3/1
+ip address 192.168.0.197 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+ip route 192.168.0.128 255.255.255.224 192.168.0.194
+
+# R2 (Profesores)
+interface fastEthernet 0/0
+ip address 192.168.0.129 255.255.255.224
+no shutdown
+exit
+interface serial 0/3/0
+ip address 192.168.0.194 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/3/1
+ip address 192.168.0.201 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+ip route 192.168.0.0 255.255.255.128 192.168.0.193
+
+# R3 (Invitados - AISLADO)
+interface fastEthernet 0/0
+ip address 192.168.0.161 255.255.255.224
+no shutdown
+exit
+interface serial 0/3/0
+ip address 192.168.0.202 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/3/1
+ip address 192.168.0.198 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+# NO añadir rutas a Estudiantes ni Profesores (aislamiento)
+
+# -------------------- EJERCICIO 3 - 4 Routers (Subred C aislada) --------------------
+
+# ROUTER A (Subred A: 10.5.127.0/25)
+interface fastEthernet 0/0
+ip address 10.5.127.1 255.255.255.128
+no shutdown
+exit
+interface serial 0/0/0
+ip address 192.168.1.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/0/1
+ip address 192.168.4.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/1/0
+ip address 192.168.5.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+ip route 10.5.126.0 255.255.255.0 192.168.1.2
+ip route 10.5.127.192 255.255.255.240 192.168.5.2
+
+# ROUTER B (Subred B: 10.5.126.0/24)
+interface fastEthernet 0/0
+ip address 10.5.126.1 255.255.255.0
+no shutdown
+exit
+interface serial 0/0/0
+ip address 192.168.1.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/0/1
+ip address 192.168.2.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/1/0
+ip address 192.168.3.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+ip route 10.5.127.0 255.255.255.128 192.168.1.1
+ip route 10.5.127.192 255.255.255.240 192.168.3.1
+
+# ROUTER C (Subred C: 10.5.127.128/26 - AISLADO)
+interface fastEthernet 0/0
+ip address 10.5.127.129 255.255.255.192
+no shutdown
+exit
+interface serial 0/0/0
+ip address 192.168.4.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/0/1
+ip address 192.168.2.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/1/0
+ip address 192.168.6.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+# NO añadir rutas a A, B, D (aislamiento)
+
+# ROUTER D (Subred D: 10.5.127.192/28)
+interface fastEthernet 0/0
+ip address 10.5.127.193 255.255.255.240
+no shutdown
+exit
+interface serial 0/0/0
+ip address 192.168.5.2 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/0/1
+ip address 192.168.3.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+interface serial 0/1/0
+ip address 192.168.6.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+ip route 10.5.126.0 255.255.255.0 192.168.3.2
+ip route 10.5.127.0 255.255.255.128 192.168.5.1
+
+# -------------------- COMANDOS ÚTILES ADICIONALES --------------------
+# Ver rutas estáticas específicas
+show ip route static
+
+# Eliminar ruta estática
+no ip route 192.168.3.0 255.255.255.0 192.168.5.2
+
+# Guardar configuración
+write memory
+copy running-config startup-config
+
+# Ver interfaces seriales con estado
+show controllers serial 0/0/0
+
+# Configurar descripción en interfaz
+interface serial 0/0/0
+description Enlace_R1_R2
+exit
+
+# -------------------- PRUEBAS DE CONECTIVIDAD --------------------
+ping 192.168.0.130           # ping a Profesores
+ping 10.5.127.194            # ping a Subred D
+traceroute 10.5.126.2        # ver ruta seguida
+
+# -------------------- AISLAMIENTO (RESUMEN) --------------------
+# Para aislar una subred, NO configurar rutas hacia ella
+# Y que los otros routers NO tengan ruta de vuelta
+# En el router aislado: solo redes directamente conectadas
