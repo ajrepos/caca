@@ -183,7 +183,101 @@ sudo umount -l /media/datos_cifrados
 # - Sin contraseña: ACCESO IMPOSIBLE
 # - Segura contra acceso físico al disco
 
+# ============================================
+# CHULETA BITLOCKER - Comandos y gestión
+# ============================================
 
+# -------------------- ADMINISTRACIÓN DE DISCOS --------------------
+# Abrir administración de discos
+diskmgmt.msc
+
+# Inicializar disco (diskpart)
+diskpart
+list disk
+select disk X
+online disk
+attributes disk clear readonly
+convert mbr
+create partition primary
+format fs=ntfs quick
+assign letter=Z
+exit
+
+# -------------------- GESTIÓN BITLOCKER --------------------
+# Activar BitLocker en unidad
+manage-bde -on X: -password -recoverypassword
+
+# Desbloquear unidad con contraseña
+manage-bde -unlock X: -password
+
+# Desbloquear con clave de recuperación
+manage-bde -unlock X: -recoverypassword CLAVE48DIGITOS
+
+# Bloquear unidad (cifrar de nuevo)
+manage-bde -lock X:
+
+# Ver estado de BitLocker
+manage-bde -status
+
+# Ver protectores configurados
+manage-bde -protectors -get X:
+
+# Eliminar contraseña
+manage-bde -protectors -delete X: -type password
+
+# Añadir clave de recuperación
+manage-bde -protectors -add X: -recoverypassword
+
+# -------------------- POLÍTICA SIN TPM --------------------
+gpedit.msc
+# Ruta: Configuración equipo → Plantillas administrativas → Componentes Windows → Cifrado unidad BitLocker → Unidades del sistema operativo
+# Opción: "Requerir autenticación adicional al iniciar" → Habilitar → "Permitir BitLocker sin TPM"
+
+# -------------------- DESBLOQUEO AUTOMÁTICO --------------------
+# Habilitar desbloqueo automático (unidad de datos)
+manage-bde -autounlock -enable X:
+
+# Deshabilitar desbloqueo automático
+manage-bde -autounlock -disable X:
+
+# Script batch para desbloqueo automático (tarea programada)
+echo manage-bde -unlock X: -password MIPASSWORD > C:\scripts\unlock.bat
+
+# -------------------- DISKPART (preparar pendrive) --------------------
+diskpart
+list disk
+select disk X
+clean
+create partition primary
+format fs=ntfs quick
+active
+exit
+
+# -------------------- CIFRADO CON DISLOCKER (Linux) --------------------
+# Instalar dislocker
+sudo apt update && sudo apt install dislocker -y
+
+# Crear puntos de montaje
+sudo mkdir -p /media/bitlocker /media/desbloqueado
+
+# Desbloquear y montar
+sudo dislocker -V /dev/sdX1 -u -- /media/bitlocker
+sudo mount -o loop /media/bitlocker/dislocker-file /media/desbloqueado
+
+# Con contraseña directa
+sudo dislocker -V /dev/sdX1 -p CONTRASEÑA -- /media/bitlocker
+
+# -------------------- COMANDOS ÚTILES --------------------
+# Suspender BitLocker (actualizaciones)
+manage-bde -protectors -disable X:
+manage-bde -protectors -enable X:
+
+# Resumen de comandos manage-bde
+manage-bde -?                      # Ayuda
+manage-bde -status                 # Estado de todas las unidades
+manage-bde -unlock X: -password    # Desbloquear con contraseña
+manage-bde -lock X:                # Bloquear unidad
+manage-bde -autounlock -enable X:  # Desbloqueo automático
 
 # ============================================
 # CHULETA VLSM ACTUALIZADA
