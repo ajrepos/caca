@@ -431,3 +431,115 @@ netcalc -v 192.168.1.0 255.255.255.0
 # - netcalc: No soporta VLSM, solo muestra información de subred simple
 # - ip-calculator: No incluido porque no tiene Windows con curl
 # - ipcalc: Solo Linux, no Windows
+
+
+# ============================================
+# CHULETA VLAN - Cisco Packet Tracer
+# ============================================
+
+# -------------------- COMANDOS BÁSICOS SWITCH --------------------
+enable                          # Modo privilegiado
+configure terminal              # Modo configuración
+exit                            # Salir del modo actual
+write memory                    # Guardar configuración
+show vlan brief                 # Ver VLANs y puertos asignados
+show interfaces trunk           # Ver puertos trunk
+show running-config             # Ver configuración actual
+show ip interface brief         # Ver interfaces IP (router)
+
+# -------------------- CREAR VLANs --------------------
+vlan 10
+name Cuerpo_docente
+exit
+
+vlan 20
+name Estudiante
+exit
+
+vlan 30
+name Invitado
+exit
+
+# -------------------- CONFIGURAR PUERTOS ACCESO --------------------
+interface fastEthernet 0/11
+switchport mode access
+switchport access vlan 10
+exit
+
+# Asignar VLAN en caliente (sin salir del modo interfaz)
+switchport access vlan 20
+
+# -------------------- CONFIGURAR PUERTOS TRUNK --------------------
+interface fastEthernet 0/1
+switchport mode trunk
+exit
+
+# Configurar trunk con VLAN nativa (opcional)
+interface fastEthernet 0/1
+switchport trunk native vlan 1
+switchport trunk allowed vlan 10,20,30
+
+# -------------------- CONFIGURAR ROUTER (Router-on-a-Stick) --------------------
+interface fastEthernet 0/1
+no shutdown
+exit
+
+# Subinterfaz VLAN 10
+interface fastEthernet 0/1.10
+encapsulation dot1q 10
+ip address 172.17.10.1 255.255.255.0
+exit
+
+# Subinterfaz VLAN 20
+interface fastEthernet 0/1.20
+encapsulation dot1q 20
+ip address 172.17.20.1 255.255.255.0
+exit
+
+# Subinterfaz VLAN 30
+interface fastEthernet 0/1.30
+encapsulation dot1q 30
+ip address 172.17.30.1 255.255.255.0
+exit
+
+# -------------------- VERIFICACIONES --------------------
+show vlan brief                 # Ver VLANs y puertos
+show interfaces trunk           # Ver puertos en modo trunk
+show ip route                   # Ver tabla de enrutamiento (router)
+show interfaces status          # Ver estado de todos los puertos
+show mac address-table          # Ver tabla MAC del switch
+
+# -------------------- COMANDOS ÚTILES ADICIONALES --------------------
+# Eliminar VLAN
+no vlan 10
+
+# Eliminar configuración de interfaz
+default interface fastEthernet 0/11
+
+# Apagar/encender interfaz
+shutdown
+no shutdown
+
+# Ver detalles de una interfaz específica
+show interface fastEthernet 0/1
+
+# Ver configuración trunk detallada
+show interface fastEthernet 0/1 switchport
+
+# -------------------- RESOLUCIÓN DE PROBLEMAS --------------------
+# Ping desde PC (modo simulación o CLI)
+ping 172.17.10.24
+
+# Verificar IP configurada en PC (CLI de PC)
+ipconfig
+
+# Comprobar conectividad con gateway
+ping 172.17.10.1
+
+# Si no hay comunicación entre VLANs:
+# 1. Verificar que subinterfaces están UP
+show ip interface brief
+# 2. Verificar encapsulación dot1q
+show running-config | section interface
+# 3. Verificar que switch tiene puerto trunk al router
+show interfaces trunk
