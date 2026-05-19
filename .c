@@ -182,3 +182,57 @@ sudo umount -l /media/datos_cifrados
 # - Solicita contraseña de cifrado
 # - Sin contraseña: ACCESO IMPOSIBLE
 # - Segura contra acceso físico al disco
+
+
+
+# ============================================
+# CHULETA VLSM ACTUALIZADA
+# Linux (git) | Windows (curl)
+# Herramientas: netcalc, SubNetter
+# ============================================
+
+
+# -------------------- SUBNETTER --------------------
+
+# LINUX (git)
+git clone https://github.com/0xShakhawat/subnetter.git
+cd subnetter
+pip3 install tabulate
+python3 subnetter.py 192.168.1.0/24 -s 10,10,10 -t
+
+# WINDOWS (curl)
+curl -L -o subnetter.zip "https://github.com/0xShakhawat/subnetter/archive/refs/heads/main.zip"
+tar -xf subnetter.zip
+cd subnetter-main
+pip install tabulate
+python subnetter.py 192.168.1.0/24 -s 10,10,10 -t
+
+
+# -------------------- NETCALC --------------------
+
+# LINUX (git)
+git clone https://gist.github.com/Letder40/netcalc
+cd netcalc
+gcc -o netcalc netcalc.c
+./netcalc -v 192.168.1.0 255.255.255.0
+
+# WINDOWS (curl) - Necesita MinGW (gcc)
+curl -L -o netcalc.c "https://gist.githubusercontent.com/Letder40/raw/netcalc.c"
+gcc -o netcalc.exe netcalc.c
+netcalc.exe -v 192.168.1.0 255.255.255.0
+
+
+# -------------------- EJEMPLO VLSM (192.168.1.0/24 → 3 subredes de 10 hosts) --------------------
+
+# SubNetter
+python3 subnetter.py 192.168.1.0/24 -s 10,10,10 -t
+
+# netcalc (NO hace VLSM automático, solo muestra info de la red)
+netcalc -v 192.168.1.0 255.255.255.0
+
+
+# -------------------- OBSERVACIONES --------------------
+# - SubNetter: Sí soporta VLSM con -s
+# - netcalc: No soporta VLSM, solo muestra información de subred simple
+# - ip-calculator: No incluido porque no tiene Windows con curl
+# - ipcalc: Solo Linux, no Windows
