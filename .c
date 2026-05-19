@@ -780,3 +780,315 @@ traceroute 10.5.126.2        # ver ruta seguida
 # Para aislar una subred, NO configurar rutas hacia ella
 # Y que los otros routers NO tengan ruta de vuelta
 # En el router aislado: solo redes directamente conectadas
+
+
+# ============================================
+# CHULETA COMANDOS GENÉRICOS - CISCO PACKET TRACER
+# ============================================
+
+
+# -------------------- MODOS DE COMANDO --------------------
+# Cambiar entre modos
+> enable                    # Usuario → Privilegiado
+# configure terminal        # Privilegiado → Configuración global
+(config)# interface fastEthernet 0/0  # Configuración global → Interfaz
+(config-if)# exit           # Volver al modo anterior
+(config)# end               # Volver a modo privilegiado
+# disable                   # Privilegiado → Usuario
+
+
+# -------------------- COMANDOS GENERALES --------------------
+enable                      # Entrar a modo privilegiado
+disable                     # Salir a modo usuario
+configure terminal          # Entrar a modo configuración
+exit                        # Salir del modo actual
+end                         # Volver a modo privilegiado
+reload                      # Reiniciar dispositivo
+write memory                # Guardar configuración (equivalente a copy running-config startup-config)
+copy running-config startup-config  # Guardar configuración
+copy startup-config running-config  # Cargar última configuración guardada
+
+
+# -------------------- CONFIGURACIÓN BÁSICA --------------------
+hostname NOMBRE            # Cambiar nombre del dispositivo
+banner motd # TEXTO #      # Mensaje de bienvenida
+no ip domain-lookup         # Deshabilitar búsqueda DNS
+enable password CONTRASEÑA  # Contraseña modo privilegiado (inseguro)
+enable secret CONTRASEÑA    # Contraseña modo privilegiado (encriptada, RECOMENDADA)
+
+# Línea de consola
+line console 0
+password CONTRASEÑA
+login
+exec-timeout 5 0           # Timeout de 5 minutos
+exit
+
+# Línea VTY (acceso remoto - Telnet/SSH)
+line vty 0 4
+password CONTRASEÑA
+login
+transport input telnet
+exit
+
+
+# -------------------- INTERFACES --------------------
+# Configurar interfaz
+interface fastEthernet 0/0      # Interfaz FastEthernet
+interface gigabitEthernet 0/1   # Interfaz GigabitEthernet
+interface serial 0/0/0          # Interfaz Serial
+interface vlan 1                # Interfaz VLAN (SVI)
+
+# Comandos dentro de la interfaz
+ip address 192.168.1.1 255.255.255.0  # Asignar IP y máscara
+ip address dhcp               # Obtener IP por DHCP
+no shutdown                   # Activar interfaz (UP)
+shutdown                      # Desactivar interfaz (DOWN)
+clock rate 64000              # Para interfaces serial DCE (solo un extremo)
+description "Texto descriptivo"  # Añadir descripción a la interfaz
+bandwidth 100000              # Ancho de banda en Kbps
+duplex full                   # Configurar dúplex (full/half/auto)
+speed 100                     # Configurar velocidad (10/100/1000/auto)
+
+# Ver interfaces
+show interfaces               # Todas las interfaces
+show interfaces status        # Resumen estado interfaces
+show ip interface brief       # Resumen IPs y estados (MUY ÚTIL)
+show interface fastEthernet 0/0  # Detalle de interfaz específica
+show controllers serial 0/0/0    # Ver DCE/DTE en serial
+
+
+# -------------------- RUTAS ESTÁTICAS --------------------
+# Ruta estática estándar
+ip route [red_destino] [máscara] [siguiente_salto]
+
+# Ejemplos
+ip route 192.168.2.0 255.255.255.0 192.168.1.2
+ip route 10.0.0.0 255.0.0.0 172.16.1.1
+
+# Ruta por defecto (gateway de último recurso)
+ip route 0.0.0.0 0.0.0.0 192.168.1.254
+
+# Ruta estática con interfaz de salida
+ip route 192.168.3.0 255.255.255.0 serial 0/0/0
+
+# Ruta estática flotante (métrica de respaldo)
+ip route 192.168.4.0 255.255.255.0 192.168.5.2 10
+
+# Eliminar ruta estática
+no ip route 192.168.2.0 255.255.255.0 192.168.1.2
+
+
+# -------------------- PROTOCOLOS DINÁMICOS --------------------
+# RIP (Routing Information Protocol)
+router rip
+version 2
+network 192.168.1.0
+network 192.168.2.0
+no auto-summary
+exit
+
+# OSPF (Open Shortest Path First)
+router ospf 1
+router-id 1.1.1.1
+network 192.168.1.0 0.0.0.255 area 0
+network 192.168.2.0 0.0.0.255 area 0
+exit
+
+# EIGRP (Enhanced Interior Gateway Routing Protocol)
+router eigrp 100
+network 192.168.1.0 0.0.0.255
+network 192.168.2.0 0.0.0.255
+no auto-summary
+exit
+
+
+# -------------------- VERIFICACIÓN Y DIAGNÓSTICO --------------------
+show running-config          # Configuración actual (RAM)
+show startup-config          # Configuración guardada (NVRAM)
+show ip route                # Tabla de enrutamiento (MUY ÚTIL)
+show ip route static         # Solo rutas estáticas
+show ip route connected      # Solo redes conectadas directamente
+
+show cdp neighbors           # Vecinos CDP
+show cdp neighbors detail    # Detalle de vecinos CDP
+
+show mac address-table       # Tabla MAC del switch
+show vlan brief              # VLANs y puertos asignados
+show interfaces trunk        # Puertos en modo trunk
+
+show version                 # Versión del IOS y uptime
+show clock                   # Ver fecha/hora del dispositivo
+
+show ip protocols            # Protocolos de enrutamiento activos
+show ip arp                  # Tabla ARP
+
+# Debug (para troubleshooting)
+debug ip packet
+debug ip routing
+undebug all                  # Desactivar todos los debug
+
+
+# -------------------- VLANs (Switches) --------------------
+# Crear VLAN
+vlan 10
+name Ventas
+exit
+
+# Asignar puerto a VLAN (modo access)
+interface fastEthernet 0/1
+switchport mode access
+switchport access vlan 10
+exit
+
+# Configurar puerto trunk
+interface fastEthernet 0/24
+switchport mode trunk
+# trunk nativa (opcional)
+switchport trunk native vlan 1
+# permitir VLANs específicas (opcional)
+switchport trunk allowed vlan 10,20,30
+exit
+
+# Verificar VLANs
+show vlan brief
+show interfaces trunk
+
+
+# -------------------- ROUTER-ON-A-STICK --------------------
+# Configurar subinterfaces en el router
+interface fastEthernet 0/0
+no shutdown
+exit
+
+interface fastEthernet 0/0.10
+encapsulation dot1q 10
+ip address 192.168.10.1 255.255.255.0
+exit
+
+interface fastEthernet 0/0.20
+encapsulation dot1q 20
+ip address 192.168.20.1 255.255.255.0
+exit
+
+
+# -------------------- DHCP --------------------
+# Configurar servidor DHCP en router
+ip dhcp excluded-address 192.168.1.1 192.168.1.10
+ip dhcp pool RED_LOCAL
+network 192.168.1.0 255.255.255.0
+default-router 192.168.1.1
+dns-server 8.8.8.8
+lease 7
+exit
+
+# Ver DHCP
+show ip dhcp binding
+show ip dhcp pool
+
+
+# -------------------- ACL (Listas de Acceso) --------------------
+# ACL estándar (filtra por IP origen)
+access-list 10 permit 192.168.1.0 0.0.0.255
+access-list 10 deny any
+
+# Aplicar ACL a interfaz
+interface fastEthernet 0/0
+ip access-group 10 in
+exit
+
+# ACL extendida (filtra por IP origen/destino, puerto)
+access-list 100 permit tcp 192.168.1.0 0.0.0.255 any eq 80
+access-list 100 deny ip any any
+
+# Ver ACL
+show access-lists
+show ip access-lists
+
+
+# -------------------- NAT --------------------
+# NAT estático
+ip nat inside source static 192.168.1.10 200.0.0.1
+
+# NAT dinámico
+access-list 1 permit 192.168.1.0 0.0.0.255
+ip nat pool MI_POOL 200.0.0.1 200.0.0.10 netmask 255.255.255.0
+ip nat inside source list 1 pool MI_POOL
+
+# PAT (NAT sobrecargado)
+ip nat inside source list 1 interface serial 0/0/0 overload
+
+# Configurar interfaces NAT
+interface fastEthernet 0/0
+ip nat inside
+exit
+interface serial 0/0/0
+ip nat outside
+exit
+
+# Ver NAT
+show ip nat translations
+show ip nat statistics
+
+
+# -------------------- SSH --------------------
+# Configurar SSH en router
+hostname R1
+ip domain-name ejemplo.com
+crypto key generate rsa modulus 2048
+ip ssh version 2
+username admin secret CONTRASEÑA
+line vty 0 4
+transport input ssh
+login local
+exit
+
+# Conectar por SSH desde otro router
+ssh -l admin 192.168.1.1
+
+
+# -------------------- PRUEBAS DE CONECTIVIDAD --------------------
+ping [IP]                        # Prueba básica de conectividad
+ping 192.168.1.1 repeat 100      # 100 paquetes
+ping 192.168.1.1 size 1500       # Tamaño de paquete
+
+traceroute [IP]                  # Ver ruta seguida (RUTA)
+traceroute 192.168.1.1
+
+telnet [IP] [puerto]             # Conectar por Telnet
+
+
+# -------------------- COMANDOS PARA PCs (modo simulación) --------------------
+ipconfig                         # Ver configuración IP (Windows)
+ipconfig /all                    # Más detalles
+ping [IP]                        # Probar conectividad
+arp -a                           # Ver tabla ARP
+nslookup [dominio]               # Resolución DNS
+
+
+# -------------------- COMANDOS ÚTILES --------------------
+# Ver archivos en flash
+show flash
+
+# Limpiar configuración (borrar todo)
+write erase
+delete flash:vlan.dat
+reload
+
+# Activar logging sincrónico (evita interrupciones)
+line console 0
+logging synchronous
+exit
+
+# Configurar exec-timeout (evitar desconexión)
+line console 0
+exec-timeout 0 0
+exit
+
+
+# -------------------- TECLAS DE ACCESO RÁPIDO --------------------
+# Ctrl + Shift + 6   # Cancelar comandos en curso (ej: traceroute lento)
+# Ctrl + Z           # Volver a modo privilegiado
+# Ctrl + C           # Salir del modo configuración
+# Tab                # Autocompletar comandos
+# ?                  # Ayuda de comandos disponibles
+# ↑ / ↓              # Navegar por historial de comandos
