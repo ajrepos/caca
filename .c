@@ -280,6 +280,107 @@ manage-bde -lock X:                # Bloquear unidad
 manage-bde -autounlock -enable X:  # Desbloqueo automático
 
 # ============================================
+# CHULETA GPG - Cifrado y firmas en Linux
+# ============================================
+
+# -------------------- CIFRADO SIMÉTRICO --------------------
+# Cifrar archivo (pide contraseña)
+gpg -c archivo.txt
+
+# Cifrar archivo con contraseña en línea (inseguro, solo pruebas)
+echo "secreto" | gpg -c --batch --passphrase "miclave" > archivo.gpg
+
+# Descifrar archivo (pide contraseña)
+gpg -d archivo.txt.gpg > archivo_descifrado.txt
+
+# Descifrar ignorando error MDC (archivos antiguos)
+gpg --ignore-mdc-error -d archivo.gpg > archivo.txt
+
+# Ver tamaños de archivos
+ls -lh archivo.txt archivo.txt.gpg
+
+
+# -------------------- CIFRADO ASIMÉTRICO --------------------
+# Generar par de claves (interactivo)
+gpg --full-generate-key
+
+# Generar claves sin passphrase (automatizado)
+gpg --batch --passphrase '' --quick-generate-key "Nombre <email@dominio>" rsa2048 sign,encr
+
+# Listar claves públicas
+gpg --list-keys
+
+# Listar claves privadas
+gpg --list-secret-keys
+
+# Exportar clave pública (ASCII armor)
+gpg --export --armor "email@dominio" > clave_publica.asc
+
+# Importar clave pública
+gpg --import clave_publica.asc
+
+# Cifrar archivo para un destinatario
+gpg --encrypt --recipient "email@destinatario" archivo.txt
+
+# Descifrar archivo
+gpg --decrypt archivo.txt.gpg
+
+# Descifrar guardando en archivo
+gpg --decrypt archivo.txt.gpg > archivo_descifrado.txt
+
+
+# -------------------- FIRMAS DIGITALES --------------------
+# Firma separada (archivo.sig)
+gpg --detach-sign documento.txt
+
+# Verificar firma separada
+gpg --verify documento.txt.sig documento.txt
+
+# Firma integrada (clearsign - texto legible)
+gpg --clearsign documento.txt
+
+# Firma en binario
+gpg --sign documento.txt
+
+# Verificar firma integrada
+gpg --verify documento.txt.asc
+
+
+# -------------------- GESTIÓN DE CLAVES --------------------
+# Eliminar clave pública
+gpg --delete-key "email@dominio"
+
+# Eliminar clave privada
+gpg --delete-secret-key "email@dominio"
+
+# Exportar clave privada (CUIDADO)
+gpg --export-secret-key --armor "email@dominio" > clave_privada.asc
+
+# Importar clave privada
+gpg --import clave_privada.asc
+
+# Firmar una clave (confianza)
+gpg --sign-key "email@dominio"
+
+# Editar clave (modo interactivo)
+gpg --edit-key "email@dominio"
+# Comandos dentro del modo: trust, sign, adduid, deluid, expire, quit
+
+
+# -------------------- COMANDOS ÚTILES ADICIONALES --------------------
+# Mostrar huella digital de una clave
+gpg --fingerprint "email@dominio"
+
+# Exportar clave pública en formato binario (sin --armor)
+gpg --export "email@dominio" > clave_publica.gpg
+
+# Cifrado simétrico con algoritmo específico
+gpg -c --cipher-algo AES256 archivo.txt
+
+# Ver información detallada de un archivo GPG
+gpg --list-packets archivo.gpg
+
+# ============================================
 # CHULETA VLSM ACTUALIZADA
 # Linux (git) | Windows (curl)
 # Herramientas: netcalc, SubNetter
